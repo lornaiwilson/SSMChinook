@@ -1,6 +1,6 @@
 ---
 title: "Case Study circuli SSM"
-author: "Data Wrangling - LornaWilson"
+author: "Lorna I wilson"
 date: "September 12, 2018"
 output: html_document
 ---
@@ -28,9 +28,6 @@ fish.spec$m.age = substr(fish.spec$image.name, 5,6)
 names(fish.spec)
 head(fish.spec)
 
-```
-
-```{r}
 library(moments)
 library(dplyr)
 
@@ -47,13 +44,10 @@ names(fish.spec)
 fish.spec = merge(pl.circ.resp, fish.spec, by = "image.name")
 fish.spec$by = fish.spec$year - (as.numeric(substr(fish.spec$image.name, 5,5))+as.numeric(substr(fish.spec$image.name, 6,6)))
 names(fish.spec)
-head(fish.circ)
+head(fish.spec)
 
-na.replace(fish.circ, '999')
+#na.replace(fish.circ, '999')
 
-```
-
-```{r}
 library(ggplot2)
 library(ggridges) 
 p2 = ggplot(fish.spec, aes(x = Skew, y = sys, group = sys, fill=factor(..quantile..))) +
@@ -62,7 +56,7 @@ p2 = ggplot(fish.spec, aes(x = Skew, y = sys, group = sys, fill=factor(..quantil
                     labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)"))
 p2
 names(fish.spec)
-#Do circuli spacing relate to change in length
+#Does circuli spacing relate to change in length
 
 #Good that plots look somewhat similar among stocks
 
@@ -70,10 +64,8 @@ names(fish.spec)
 p2 = ggplot(fish.spec, aes(year, fish.length, group = year)) + geom_boxplot(aes(fill = m.age))
 p2
 p2 + facet_wrap(sys ~.) + theme_bw() + ylim(425, 1200)
-```
 
 
-```{r}
 library(lme4)
 names(fish.spec)
 #predict circulus spacing, but question is about fish length 
