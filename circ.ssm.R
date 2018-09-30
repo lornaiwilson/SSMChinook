@@ -1,5 +1,5 @@
 #title: "Data Wrangling: Case Study circuli SSM"
-#author: "Lorna I wilson"
+#author: "Lorna I Wilson"
 #date: "Started September 12, 2018"
 
 pl.circ = read.csv(file="CirclusSP.txt", header = TRUE, sep = ",")
