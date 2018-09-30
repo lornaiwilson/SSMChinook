@@ -31,14 +31,14 @@ fish.spec$by = fish.spec$year - (as.numeric(substr(fish.spec$image.name, 5,5))+a
 
 head(fish.spec)
 #na.replace(fish.circ, '999')
+names(fish.spec)
 
 library(ggplot2)
 library(ggridges) 
 p2 = ggplot(fish.spec, aes(x = Skew, y = sys, group = sys, fill=factor(..quantile..))) +
   stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
   scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),
-                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)"))
-p2
+                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p2
 #Good that plots look somewhat similar among stocks
 
 #Does circuli spacing relate to change in length
@@ -48,16 +48,10 @@ p2 = ggplot(fish.spec, aes(year, fish.length, group = year)) + geom_boxplot(aes(
 p2 + facet_grid(m.age~sys) + theme_bw() + ylim(425, 1200)
 
 
-library(lme4)
-names(fish.spec)
-#predict circulus spacing, but question is about fish length 
-lme.pl1 = lmer(Mean ~ as.factor(fish.spec$m.age) + fish.spec$year +
-                 (1|as.factor(fish.spec$sys)) + (1|as.factor(fish.spec$by)), data = fish.spec) 
-summary(lme.pl1)
-summary(fish.spec$fish.length)
 names(fish.spec)
 ######################################3
 #predict fish length
+library(lme4)
 lme.pl2 = lmer(fish.length ~ Mean + as.factor(m.age) + year +
                  (1|sys) + (1|by), data = fish.spec) 
 summary(lme.pl2)
