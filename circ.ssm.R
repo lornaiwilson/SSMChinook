@@ -2,8 +2,29 @@
 #author: "Lorna I Wilson"
 #date: "Started September 12, 2018"
 
+#Read circulus data into workspace
 pl.circ = read.csv(file="CirclusSP.txt", header = TRUE, sep = ",")
 names(pl.circ)
+
+#Read SST temp data into workspace
+#Sum: June - Sept
+goa.sst = read.csv(file="goa.sst.csv", header = TRUE, sep = ",")
+head(goa.sst)
+bs.sst = read.csv(file="bs.sst.csv", header = TRUE, sep = ",") #June - Sept SST
+head(bs.sst)
+
+#add simple names
+bs.sst = cbind.data.frame(rep("BS", dim(bs.sst)[1]), bs.sst)
+names(bs.sst) = c("waters", "Yr", "sumSST", "wintSST")
+head(bs.sst)
+
+goa.sst = cbind.data.frame(rep("GOA", dim(goa.sst)[1]), goa.sst)
+names(goa.sst) = c("waters", "Yr", "sumSST", "wintSST")
+head(goa.sst)
+
+#put all SST data in one table
+sst.waters = rbind.data.frame(goa.sst, bs.sst)
+head(sst.waters)
 
 #Make specimen table
 fish.spec = cbind.data.frame(pl.circ$image.name, pl.circ$sys, pl.circ$year, pl.circ$project.code, pl.circ$doy, pl.circ$fishlength)
@@ -30,9 +51,27 @@ fish.spec = merge(pl.circ.resp, fish.spec, by = "image.name")
 fish.spec$by = fish.spec$year - (as.numeric(substr(fish.spec$image.name, 5,5))+as.numeric(substr(fish.spec$image.name, 6,6)))
 
 head(fish.spec)
-#na.replace(fish.circ, '999')
+
+#add GOA and BS designations to data frame
+waters = c("BS", "BS", "GOA", "GOA", "GOA", "BS", "GOA", "BS", "GOA", "GOA", "BS", "GOA")
+sys.waters = cbind.data.frame(waters, unique(fish.spec$sys))
+names(sys.waters) = c("waters", "sys")
+fish.spec = merge(sys.waters, fish.spec, "sys") 
 names(fish.spec)
 
+###Add SST to dataframe
+summary(fish.spec$waters)
+summary(fish.spec$year)
+#Common fields
+fish.spec$YrWaters = paste(fish.spec$year, fish.spec$waters)
+sst.waters$YrWaters = paste(sst.waters$Yr, sst.waters$waters)
+head(fish.spec$YrWaters)
+head(sst.waters$YrWaters)
+#Merge
+fish.spec = merge(fish.spec, sst.waters, "YrWaters")
+head(fish.spec)
+
+#Plot circ data
 library(ggplot2)
 library(ggridges) 
 p2 = ggplot(fish.spec, aes(x = Skew, y = sys, group = sys, fill=factor(..quantile..))) +
@@ -52,21 +91,20 @@ names(fish.spec)
 ######################################3
 #predict fish length
 library(lme4)
-lme.pl2 = lmer(fish.length ~ Mean + as.factor(m.age) + year +
-                 (1|sys) + (1|by), data = fish.spec) 
+lme.pl2 = lmer(fish.length ~ Mean + as.factor(m.age) + year + image.name + (1|sys) + (1|by), data = fish.spec) 
 summary(lme.pl2)
 #Yes, but do other circulus spacing features predict fish length as well as mean?
 
-lme.pl3 = lmer(fish.length ~ SD + as.factor(m.age) + year +
+lme.pl3 = lmer(fish.length ~ SD + as.factor(m.age) + year + sumSST + 
                  (1|sys) + (1|by), data = fish.spec) 
 #need to rescale SD
 summary(lme.pl3)
 
-lme.pl4 = lmer(fish.length ~ Skew + as.factor(m.age) + year +
+lme.pl4 = lmer(fish.length ~ Skew + as.factor(m.age) + (1|year) + sumSST + 
                  (1|sys) + (1|by), data = fish.spec) 
 summary(lme.pl4)
 
-lme.pl5 = lmer(fish.length ~ kurt + as.factor(m.age) + year +
+lme.pl5 = lmer(fish.length ~ kurt + as.factor(m.age) + (1|year) +sumSST + 
                  (1|sys) + (1|by), data = fish.spec) 
 summary(lme.pl5)
 
