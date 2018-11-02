@@ -6,7 +6,7 @@
 pl.circ = read.csv(file="CirclusSP.txt", header = TRUE, sep = ",")
 names(pl.circ)
 
-#Read SST temp data into workspace
+############Read SST temp data into workspace
 #Sum: June - Sept
 goa.sst = read.csv(file="goa.sst.csv", header = TRUE, sep = ",")
 head(goa.sst)
@@ -26,6 +26,7 @@ head(goa.sst)
 sst.waters = rbind.data.frame(goa.sst, bs.sst)
 head(sst.waters)
 
+###########################################################
 #Make specimen table
 fish.spec = cbind.data.frame(pl.circ$image.name, pl.circ$sys, pl.circ$year, pl.circ$project.code, pl.circ$doy, pl.circ$fishlength)
 dim(fish.spec)
@@ -71,16 +72,59 @@ head(sst.waters$YrWaters)
 fish.spec = merge(fish.spec, sst.waters, "YrWaters")
 head(fish.spec)
 
+
+######################################3
+#predict fish length
+library(lme4)
+lme.pl1 = lmer(fish.length ~  as.factor(m.age) + year + sumSST + wintSST +
+                 (1|sys) + (1|by), data = fish.spec) 
+lme.pl2 = lmer(fish.length ~  as.factor(m.age) + year  + wintSST +
+                 (1|sys) + (1|by), data = fish.spec) 
+lme.pl3 = lmer(fish.length ~  as.factor(m.age) + year  + sumSST +
+                 (1|sys) + (1|by), data = fish.spec) 
+lme.pl4 = lmer(fish.length ~  as.factor(m.age) + year  +
+                 (1|sys) + (1|by), data = fish.spec) 
+library(AICcmodavg)
+
+models<-list(lme.pl1, lme.pl2, lme.pl3, lme.pl4)
+Modnames <- c('lme.pl1','lme.pl2','lme.pl3','lme.pl4')
+aictab(cand.set = models, modnames = Modnames, sort = TRUE)
+anova(lme.pl1, lme.pl2)
+
+
+
 #Plot circ data
 library(ggplot2)
 library(ggridges) 
+names(fish.spec)
+p1 = ggplot(fish.spec, aes(x = Mean, y = sys, group = sys, fill=factor(..quantile..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
+  scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),
+                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p1
+p1 = ggplot(fish.spec, aes(x = Mean, y = year, group = year, fill=factor(..quantile..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
+  scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),
+                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p1
+#no obvious trends
+
 p2 = ggplot(fish.spec, aes(x = Skew, y = sys, group = sys, fill=factor(..quantile..))) +
   stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
   scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),
                     labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p2
 #Good that plots look somewhat similar among stocks
+p2 = ggplot(fish.spec, aes(x = Skew, y = year, group = year, fill=factor(..quantile..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
+  scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p2
+# hm, skewness in 1980 and previous are inconsistent
 
-#Does circuli spacing relate to change in length
+p2 = ggplot(fish.spec, aes(x = SD, y = year, group = year, fill=factor(..quantile..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
+  scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p2
+
+p2 = ggplot(fish.spec, aes(x = kurt, y = year, group = year, fill=factor(..quantile..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE, quantiles = c(0.05, 0.95)) +
+  scale_fill_manual(name = "Quantile", values = c("#E69F00", "#999999", "#56B4E9"),                    labels = c("(0, 0.05)", "(0.05, 0.95)", "(0.95, 1)")); p2
+
 
 #So, look at lengths by stock over time
 p2 = ggplot(fish.spec, aes(year, fish.length, group = year)) + geom_boxplot(aes(fill = m.age)); p2
@@ -88,31 +132,6 @@ p2 + facet_grid(m.age~sys) + theme_bw() + ylim(425, 1200)
 
 
 names(fish.spec)
-######################################3
-#predict fish length
-library(lme4)
-lme.pl2 = lmer(fish.length ~ Mean + as.factor(m.age) + year + image.name + (1|sys) + (1|by), data = fish.spec) 
-summary(lme.pl2)
-#Yes, but do other circulus spacing features predict fish length as well as mean?
-
-lme.pl3 = lmer(fish.length ~ SD + as.factor(m.age) + year + sumSST + 
-                 (1|sys) + (1|by), data = fish.spec) 
-#need to rescale SD
-summary(lme.pl3)
-
-lme.pl4 = lmer(fish.length ~ Skew + as.factor(m.age) + (1|year) + sumSST + 
-                 (1|sys) + (1|by), data = fish.spec) 
-summary(lme.pl4)
-
-lme.pl5 = lmer(fish.length ~ kurt + as.factor(m.age) + (1|year) +sumSST + 
-                 (1|sys) + (1|by), data = fish.spec) 
-summary(lme.pl5)
-
-
-library(AICcmodavg)
-
-models<-list(lme.pl2, lme.pl3, lme.pl4, lme.pl5)
-Modnames <- c('lme.pl2','lme.pl3','lme.pl4','lme.pl5')
-aictab(cand.set = models, modnames = Modnames, sort = TRUE)
+#
 
 
