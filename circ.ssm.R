@@ -6,25 +6,17 @@
 pl.circ = read.csv(file="CirclusSP.txt", header = TRUE, sep = ",")
 names(pl.circ)
 
+s4.circ = read.csv(file="S4circuli.txt", header = TRUE, sep = ",")
+names(pl.circ)
+
 ############Read SST temp data into workspace
-#Sum: June - Sept
-goa.sst = read.csv(file="goa.sst.csv", header = TRUE, sep = ",")
-head(goa.sst)
-bs.sst = read.csv(file="bs.sst.csv", header = TRUE, sep = ",") #June - Sept SST
-head(bs.sst)
+sst.area.sum = read.csv(file="SSTbyAreaSum.csv", header = TRUE, sep = ",")
+sst.area.wint = read.csv(file="SSTbyAreaWint.csv", header = TRUE, sep = ",")
+head(sst.area.wint)
 
-#add simple names
-bs.sst = cbind.data.frame(rep("BS", dim(bs.sst)[1]), bs.sst)
-names(bs.sst) = c("waters", "Yr", "sumSST", "wintSST")
-head(bs.sst)
+pop.season.area = read.csv(file="SysAreas.csv", header = TRUE, sep = ",")
+head(pop.season.area)
 
-goa.sst = cbind.data.frame(rep("GOA", dim(goa.sst)[1]), goa.sst)
-names(goa.sst) = c("waters", "Yr", "sumSST", "wintSST")
-head(goa.sst)
-
-#put all SST data in one table
-sst.waters = rbind.data.frame(goa.sst, bs.sst)
-head(sst.waters)
 
 ###########################################################
 #Make specimen table
@@ -53,23 +45,31 @@ fish.spec$by = fish.spec$year - (as.numeric(substr(fish.spec$image.name, 5,5))+a
 
 head(fish.spec)
 
-#add GOA and BS designations to data frame
-waters = c("BS", "BS", "GOA", "GOA", "GOA", "BS", "GOA", "BS", "GOA", "GOA", "BS", "GOA")
-sys.waters = cbind.data.frame(waters, unique(fish.spec$sys))
-names(sys.waters) = c("waters", "sys")
-fish.spec = merge(sys.waters, fish.spec, "sys") 
-names(fish.spec)
+#######Add SST to dataframe
+#Merge area to pop
+fish.spec = merge(fish.spec, pop.season.area, by.x = "sys", by.y = "Pop")
+###Merge temps to area and years
+#make common fields
+sst.area.sum$YrArea = paste(sst.area.sum$Year, sst.area.sum$Area)
+sst.area.wint$YrArea = paste(sst.area.wint$Year, sst.area.wint$Area)
 
-###Add SST to dataframe
-summary(fish.spec$waters)
-summary(fish.spec$year)
-#Common fields
-fish.spec$YrWaters = paste(fish.spec$year, fish.spec$waters)
-sst.waters$YrWaters = paste(sst.waters$Yr, sst.waters$waters)
-head(fish.spec$YrWaters)
-head(sst.waters$YrWaters)
-#Merge
-fish.spec = merge(fish.spec, sst.waters, "YrWaters")
+fish.spec$YrSumArea = paste(fish.spec$year, fish.spec$Sum.Area)
+fish.spec$YrWintArea = paste(fish.spec$year, fish.spec$Wint.area)
+
+#Merge sum temps in
+fish.spec = merge(fish.spec, sst.area.sum, by.x = "YrSumArea", by.y = "YrArea")
+#remove extra columns from merge, Area and Year
+fish.spec$Area = NULL
+fish.spec$Year = NULL
+
+head(fish.spec)
+
+#Merge wint temps in
+fish.spec = merge(fish.spec, sst.area.wint, by.x = "YrWintArea", by.y = "YrArea")
+#remove extra columns from merge, Area and Year
+fish.spec$Area = NULL
+fish.spec$Year = NULL
+
 head(fish.spec)
 
 
