@@ -76,21 +76,16 @@ head(fish.spec)
 ######################################3
 #predict fish length
 library(lme4)
-lme.pl1 = lmer(fish.length ~  as.factor(m.age) + year + sumSST + wintSST +
-                 (1|sys) + (1|by), data = fish.spec) 
-lme.pl2 = lmer(fish.length ~  as.factor(m.age) + year  + wintSST +
-                 (1|sys) + (1|by), data = fish.spec) 
-lme.pl3 = lmer(fish.length ~  as.factor(m.age) + year  + sumSST +
-                 (1|sys) + (1|by), data = fish.spec) 
-lme.pl4 = lmer(fish.length ~  as.factor(m.age) + year  +
-                 (1|sys) + (1|by), data = fish.spec) 
+lme.pl1 = lmer(fish.length ~  as.factor(m.age) + (1|year) + sum + wint +(1|sys) + (1|by), data = fish.spec) 
+lme.pl2 = lmer(fish.length ~  as.factor(m.age) + (1|year)  + wint +(1|sys) + (1|by), data = fish.spec) 
+lme.pl3 = lmer(fish.length ~  as.factor(m.age) + (1|year)  + sum +(1|sys) + (1|by), data = fish.spec) 
+lme.pl4 = lmer(fish.length ~  as.factor(m.age) + (1|year) +(1|sys) + (1|by), data = fish.spec) 
 library(AICcmodavg)
 
 models<-list(lme.pl1, lme.pl2, lme.pl3, lme.pl4)
 Modnames <- c('lme.pl1','lme.pl2','lme.pl3','lme.pl4')
 aictab(cand.set = models, modnames = Modnames, sort = TRUE)
-anova(lme.pl1, lme.pl2)
-
+anova(lme.pl1, lme.pl3)
 
 
 #Plot circ data
